@@ -1,0 +1,126 @@
+package com.careprovider.controllers;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.careprovider.dtos.FeedbackDTO;
+import com.careprovider.dtos.PaymentDTO;
+import com.careprovider.models.Booking;
+import com.careprovider.services.BookingService;
+import com.careprovider.services.FeedbackService;
+
+@CrossOrigin
+@RestController
+@RequestMapping("/api/bookings")
+public class BookingController {// 9
+
+	@Autowired
+	private BookingService bservice;
+	@Autowired
+	private FeedbackService fservice;
+
+	// ServiceDetails -- book caretaker
+	@PostMapping // axios.post('http://localhost:8080/api/bookings', payload)
+	public ResponseEntity<?> save(@RequestBody Booking booking) {// custId, care taker id and service id is mapped with
+																	// this
+		boolean status = bservice.saveBooking(booking);
+		if(status)
+		return ResponseEntity.ok("Booked successfully");
+		else
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error While booking service!");
+	}
+
+	// PaymentForm
+	@PostMapping("payment") // axios.post('http://localhost:8080/api/bookings/payment', data)
+	public ResponseEntity<?> savepayment(@RequestBody PaymentDTO dto) {// {bookingid:
+																		// item?.id?.id,cardno,nameoncard,amount,days}
+		System.out.println(dto);// PaymentDTO [bookingid=8 com.careprovider.dtos.PaymentDTO@4ac22904]
+		boolean status = bservice.savePayment(dto);
+		if(status)
+			return ResponseEntity.ok("Paid successfully");
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Opps! Payment failed!");
+	}
+
+//	@PutMapping("{id}") // unknown
+//	public ResponseEntity<?> update(@PathVariable("id") int id, @RequestBody Booking dto) {
+//		System.out.println(dto);
+//		dto.setId(id);
+//		bservice.saveBooking(dto);
+//		return ResponseEntity.ok("Updated successfully");
+//	}
+
+	//
+	@GetMapping // axios.get(http://localhost:8080/api/bookings)
+	public ResponseEntity<?> findAll() {
+		List<Booking> bookings = bservice.listall();
+		if(bookings.size()>0)
+			return ResponseEntity.ok(bookings);
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No Bookings found!");
+			
+	}
+
+	// PaymentPage
+	@GetMapping("{id}") // axios.get(http://localhost:8080/api/bookings/+id)
+	public ResponseEntity<?> findById(@PathVariable("id") int id) {
+		Booking booking = bservice.findById(id);
+		if(booking !=null)
+		return ResponseEntity.ok(booking);
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No Booking found!");
+	}
+
+	// MyBookings
+	@GetMapping("status/{id}/{status}") // axios.get('http://localhost:8080/api/bookings/status/' + id + '/' + status)
+	public ResponseEntity<?> updateBookingById(@PathVariable("id") int id, @PathVariable("status") String status) {
+		boolean isUpdated = bservice.updateStatus(id, status);
+		
+		if(isUpdated )
+		return ResponseEntity.ok("Status updated successfully");
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error while Updating service");
+	}
+	
+	// MyBookings
+	@GetMapping("customers/{id}") // axios.get('http://localhost:8080/api/bookings/customers/'
+									// +sessionStorage.getItem('id')
+	public ResponseEntity<?> findCustomerBooking(@PathVariable("id") int id) {
+		
+		List<Booking> bookings = bservice.findByCustomerId(id);
+		System.out.println("bookings " + bookings);
+		if(bookings.size()>0)
+			return ResponseEntity.ok(bookings);
+		
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No bookings found!");
+	}
+
+	// MyBookings
+	@GetMapping("caretakers/{id}") // axios.get( 'http://localhost:8080/api/bookings/caretakers/'
+									// +sessionStorage.getItem('id'))
+	public ResponseEntity<?> findCaretakersBooking(@PathVariable("id") int id) {
+		List<Booking> bookings = bservice.findByCareTakerId(id);
+		System.out.println(" bookings " + bookings);
+		if(bookings.size()>0)
+		return ResponseEntity.ok(bookings);
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No bookings found!");
+	}
+
+	// FeedbackForm
+	@PostMapping("feedbacks") // axios.post('http://localhost:8080/api/bookings/feedbacks', data)
+	public ResponseEntity<?> savefeedback(@RequestBody FeedbackDTO dto) {// data = {bookingId: item?.id?.id,msg,ratings}
+		boolean status = fservice.save(dto);
+		
+		if(status)
+		return ResponseEntity.ok("saved successfully");
+		return ResponseEntity.ok("saved successfully");
+	}
+
+}
